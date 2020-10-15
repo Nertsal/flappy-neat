@@ -20,8 +20,8 @@ impl State {
             jump_speed: 10.0,
         };
         Self {
-            model: Model::new(geng, rules),
-            renderer: Renderer::new(geng),
+            model: Model::new(rules, 5),
+            renderer: Renderer::new(geng, 5),
         }
     }
 }
@@ -35,7 +35,8 @@ impl geng::State for State {
         self.renderer.draw(framebuffer, &self.model);
     }
     fn handle_event(&mut self, event: geng::Event) {
-        self.model.handle_event(event);
+        self.model.handle_event(&event);
+        self.renderer.handle_event(&event);
     }
 }
 
