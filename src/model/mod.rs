@@ -29,24 +29,8 @@ pub enum Controller {
 }
 
 impl Model {
-    pub fn new(rules: Rules, clients_count: usize) -> Self {
-        let neat_config = NeatConfig {
-            input_size: 5,
-            output_size: 1,
-            max_clients: clients_count,
-            disjoint: 1.0,
-            excess: 1.0,
-            weight_diff: 1.0,
-            cp: 1.0,
-            probability_mutate_link: 0.5,
-            probability_mutate_node: 0.0,
-            probability_mutate_weight_shift: 0.0,
-            probability_mutate_weight_random: 0.0,
-            probability_mutate_link_toggle: 0.0,
-            weight_shift_strength: 1.0,
-            clients_mutation_rate: 0.8,
-        };
-        let neat = Neat::new(neat_config);
+    pub fn new(rules: Rules, config: NeatConfig) -> Self {
+        let neat = Neat::new(config);
         let mut clients = HashMap::with_capacity(neat.borrow().clients.len());
         for (id, client) in neat.borrow().clients.iter().enumerate() {
             let bird = Bird {

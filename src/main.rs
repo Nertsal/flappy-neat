@@ -19,9 +19,13 @@ impl State {
             bird_radius: 1.0,
             jump_speed: 10.0,
         };
+        let config: neat::NeatConfig = serde_json::from_reader(std::io::BufReader::new(
+            std::fs::File::open("config.json").unwrap(),
+        ))
+        .unwrap();
         Self {
-            model: Model::new(rules, 5),
-            renderer: Renderer::new(geng, 5),
+            renderer: Renderer::new(geng, config.max_clients),
+            model: Model::new(rules, config),
         }
     }
 }
