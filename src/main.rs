@@ -1,6 +1,5 @@
 use geng::prelude::ugli::Framebuffer;
 use geng::prelude::*;
-use neat::*;
 
 mod model;
 mod renderer;
@@ -17,7 +16,8 @@ impl State {
     fn new(geng: &Rc<Geng>) -> Self {
         let rules = Rules {
             gravity: vec2(0.0, -9.8),
-            bird_radius: 20.0,
+            bird_radius: 1.0,
+            jump_speed: 10.0,
         };
         Self {
             model: Model::new(geng, rules),
