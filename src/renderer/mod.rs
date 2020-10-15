@@ -82,7 +82,13 @@ impl Renderer {
             geng::Event::KeyDown { key } => match key {
                 geng::Key::Right | geng::Key::D => {
                     self.focused = match self.focused {
-                        Some(focus) => Some(focus + 1),
+                        Some(focus) => {
+                            if focus >= self.max_focus - 1 {
+                                None
+                            } else {
+                                Some(focus + 1)
+                            }
+                        }
                         None => Some(0),
                     }
                 }
@@ -95,7 +101,7 @@ impl Renderer {
                                 Some(focus - 1)
                             }
                         }
-                        None => Some(self.max_focus),
+                        None => Some(self.max_focus - 1),
                     }
                 }
                 _ => (),
