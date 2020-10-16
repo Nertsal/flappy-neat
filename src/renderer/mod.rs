@@ -16,7 +16,7 @@ impl Renderer {
             max_focus: clients_count - 1,
         }
     }
-    pub fn update(&mut self, delta_time: f32) {}
+    pub fn update(&mut self, _delta_time: f32) {}
     pub fn draw(&mut self, framebuffer: &mut ugli::Framebuffer, model: &Model) {
         ugli::clear(framebuffer, Some(Color::BLACK), None);
 

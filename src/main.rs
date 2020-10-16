@@ -1,4 +1,3 @@
-use geng::prelude::ugli::Framebuffer;
 use geng::prelude::*;
 
 mod model;
@@ -35,7 +34,7 @@ impl geng::State for State {
         self.model.update(delta_time as f32);
         self.renderer.update(delta_time as f32);
     }
-    fn draw(&mut self, framebuffer: &mut Framebuffer) {
+    fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
         self.renderer.draw(framebuffer, &self.model);
     }
     fn handle_event(&mut self, event: geng::Event) {
