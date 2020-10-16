@@ -13,11 +13,10 @@ struct State {
 
 impl State {
     fn new(geng: &Rc<Geng>) -> Self {
-        let rules = Rules {
-            gravity: vec2(0.0, -9.8),
-            bird_radius: 1.0,
-            jump_speed: 10.0,
-        };
+        let rules: Rules = serde_json::from_reader(std::io::BufReader::new(
+            std::fs::File::open("rules.json").unwrap(),
+        ))
+        .unwrap();
         let config: neat::NeatConfig = serde_json::from_reader(std::io::BufReader::new(
             std::fs::File::open("config.json").unwrap(),
         ))

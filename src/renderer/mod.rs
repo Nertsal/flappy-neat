@@ -32,6 +32,16 @@ impl Renderer {
 
         let screen_center = framebuffer.size().map(|x| (x as f32) / 2.0);
 
+        for (_, bird) in &model.clients {
+            let color = if bird.alive { Color::RED } else { Color::GRAY };
+            self.geng.draw_2d().circle(
+                framebuffer,
+                (bird.pos - offset) * self.scale + screen_center,
+                bird.radius * self.scale,
+                color,
+            );
+        }
+
         let color = if model.player.alive {
             Color::BLUE
         } else {
@@ -43,13 +53,30 @@ impl Renderer {
             model.player.radius * self.scale,
             color,
         );
-        for (_, bird) in &model.clients {
-            let color = if bird.alive { Color::RED } else { Color::GRAY };
-            self.geng.draw_2d().circle(
+
+        for obstacle in &model.obstacles {
+            self.geng.draw_2d().quad(
                 framebuffer,
-                (bird.pos - offset) * self.scale + screen_center,
-                bird.radius * self.scale,
-                color,
+                AABB::from_corners(
+                    (obstacle.pos - obstacle.size / 2.0 - vec2(0.0, 20.0) - offset) * self.scale
+                        + screen_center,
+                    (obstacle.pos + vec2(obstacle.size.x, -obstacle.size.y) / 2.0 - offset)
+                        * self.scale
+                        + screen_center,
+                ),
+                Color::GRAY,
+            );
+            self.geng.draw_2d().quad(
+                framebuffer,
+                AABB::from_corners(
+                    (obstacle.pos - vec2(obstacle.size.x, -obstacle.size.y) / 2.0
+                        + vec2(0.0, 20.0)
+                        - offset)
+                        * self.scale
+                        + screen_center,
+                    (obstacle.pos + obstacle.size / 2.0 - offset) * self.scale + screen_center,
+                ),
+                Color::GRAY,
             );
         }
     }
