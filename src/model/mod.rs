@@ -133,7 +133,9 @@ impl Model {
 
                 match &bird.controller {
                     Controller::Client(client) => {
-                        let output = client.borrow().calculate(Self::read_bird(bird));
+                        let output = client
+                            .borrow()
+                            .calculate(Self::read_bird(bird, &self.obstacles));
                         if *output.first().unwrap() >= 0.5 {
                             bird.speed.y = self.rules.jump_speed;
                         }
@@ -185,8 +187,24 @@ impl Model {
         self.obstacles.clear();
         self.next_obstacle = self.rules.obstacle_dist;
     }
-    fn read_bird(bird: &Bird) -> Vec<f32> {
-        vec![bird.pos.y]
+    fn read_bird(bird: &Bird, obstacles: &Vec<Obstacle>) -> Vec<f32> {
+        let mut input = Vec::with_capacity(4);
+        input.push(bird.pos.y / 40.0 + 0.5);
+        for obstacle in obstacles {
+            let next = obstacle.pos.x + obstacle.size.x / 2.0;
+            if bird.pos.x <= next {
+                input.push((next - bird.pos.x) / 50.0);
+                input.push((bird.pos.y - obstacle.pos.y - obstacle.size.y / 2.0) / 40.0 + 0.5);
+                input.push((bird.pos.y - obstacle.pos.y + obstacle.size.y / 2.0) / 40.0 + 0.5);
+                println!("{:?}", input);
+                return input;
+            }
+        }
+        for _ in 0..3 {
+            input.push(0.0);
+        }
+        println!("{:?}", input);
+        input
     }
     fn spawn_obstacle(&mut self) {
         let mut random = rand::thread_rng();
