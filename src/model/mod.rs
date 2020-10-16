@@ -172,9 +172,15 @@ impl Model {
     fn reset(&mut self) {
         self.player.alive = true;
         self.player.pos = vec2(0.0, 0.0);
+        self.player.speed.y = 0.0;
         for (_, bird) in &mut self.clients {
+            if let Controller::Client(client) = &bird.controller {
+                client.borrow_mut().score = bird.pos.x;
+            }
+
             bird.alive = true;
             bird.pos = vec2(0.0, 0.0);
+            bird.speed.y = 0.0;
         }
         self.obstacles.clear();
         self.next_obstacle = self.rules.obstacle_dist;

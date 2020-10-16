@@ -58,7 +58,7 @@ impl Renderer {
             self.geng.draw_2d().quad(
                 framebuffer,
                 AABB::from_corners(
-                    (obstacle.pos - obstacle.size / 2.0 - vec2(0.0, 20.0) - offset) * self.scale
+                    (obstacle.pos - obstacle.size / 2.0 - vec2(0.0, 30.0) - offset) * self.scale
                         + screen_center,
                     (obstacle.pos + vec2(obstacle.size.x, -obstacle.size.y) / 2.0 - offset)
                         * self.scale
@@ -70,7 +70,7 @@ impl Renderer {
                 framebuffer,
                 AABB::from_corners(
                     (obstacle.pos - vec2(obstacle.size.x, -obstacle.size.y) / 2.0
-                        + vec2(0.0, 20.0)
+                        + vec2(0.0, 30.0)
                         - offset)
                         * self.scale
                         + screen_center,
