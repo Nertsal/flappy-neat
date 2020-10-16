@@ -12,7 +12,7 @@ impl Renderer {
         Self {
             geng: geng.clone(),
             scale: 20.0,
-            focused: Some(1),
+            focused: None,
             max_focus: clients_count - 1,
         }
     }
@@ -32,18 +32,24 @@ impl Renderer {
 
         let screen_center = framebuffer.size().map(|x| (x as f32) / 2.0);
 
+        let color = if model.player.alive {
+            Color::BLUE
+        } else {
+            Color::GRAY
+        };
         self.geng.draw_2d().circle(
             framebuffer,
             (model.player.pos - offset) * self.scale + screen_center,
             model.player.radius * self.scale,
-            Color::BLUE,
+            color,
         );
         for (_, bird) in &model.clients {
+            let color = if bird.alive { Color::RED } else { Color::GRAY };
             self.geng.draw_2d().circle(
                 framebuffer,
                 (bird.pos - offset) * self.scale + screen_center,
                 bird.radius * self.scale,
-                Color::RED,
+                color,
             );
         }
     }
@@ -54,7 +60,7 @@ impl Renderer {
     ) {
         let brain_scale = 100.0;
         let offset = vec2(50.0, 50.0);
-        for node in &genome.nodes {
+        for node in genome.nodes() {
             self.geng.draw_2d().circle(
                 framebuffer,
                 vec2(node.x, node.y) * brain_scale + offset,

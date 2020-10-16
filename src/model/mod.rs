@@ -58,16 +58,21 @@ impl Model {
     }
     pub fn update(&mut self, delta_time: f32) {
         let gravity = self.rules.gravity;
-        self.player.speed += gravity * delta_time;
-        self.player.pos += self.player.speed * delta_time;
-        for (_, bird) in &mut self.clients {
-            bird.speed += gravity * delta_time;
-            bird.pos += bird.speed * delta_time;
 
+        if self.player.alive {
+            self.player.speed += gravity * delta_time;
+            self.player.pos += self.player.speed * delta_time;
+            Self::check_bird(&mut self.player);
+        }
+
+        for (_, bird) in &mut self.clients {
             if bird.alive {
+                bird.speed += gravity * delta_time;
+                bird.pos += bird.speed * delta_time;
+
                 match &bird.controller {
                     Controller::Client(client) => {
-                        let output = client.borrow().calculate([0.0; 5].to_vec());
+                        let output = client.borrow().calculate(Self::read_bird(bird));
                         if *output.first().unwrap() >= 0.5 {
                             bird.speed.y = self.rules.jump_speed;
                         }
@@ -75,9 +80,7 @@ impl Model {
                     _ => (),
                 }
 
-                if bird.pos.y < 0.0 || bird.pos.y > 10.0 {
-                    bird.alive = false;
-                }
+                Self::check_bird(bird);
             }
         }
     }
@@ -106,6 +109,14 @@ impl Model {
             bird.alive = true;
             bird.pos = vec2(0.0, 0.0);
             bird.speed = vec2(0.0, 0.0);
+        }
+    }
+    fn read_bird(bird: &Bird) -> Vec<f32> {
+        vec![bird.pos.y]
+    }
+    fn check_bird(bird: &mut Bird) {
+        if bird.pos.y < -20.0 || bird.pos.y > 20.0 {
+            bird.alive = false;
         }
     }
 }
