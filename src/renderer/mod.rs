@@ -85,28 +85,32 @@ impl Renderer {
         framebuffer: &mut ugli::Framebuffer,
         genome: &neat::structure::Genome,
     ) {
-        let brain_scale = 100.0;
+        let brain_scale = vec2(100.0, 500.0);
         let offset = vec2(50.0, 50.0);
         for node in genome.nodes() {
             self.geng.draw_2d().circle(
                 framebuffer,
-                vec2(node.x, node.y) * brain_scale + offset,
+                vec2(node.x * brain_scale.x, node.y * brain_scale.y) + offset,
                 5.0,
                 Color::RED,
             );
         }
         for connection in &genome.connections {
             let vertices = [
-                vec2(connection.node_from.x, connection.node_from.y) * brain_scale + offset,
-                vec2(connection.node_to.x, connection.node_to.y) * brain_scale + offset,
+                vec2(
+                    connection.node_from.x * brain_scale.x,
+                    connection.node_from.y * brain_scale.y,
+                ) + offset,
+                vec2(
+                    connection.node_to.x * brain_scale.x,
+                    connection.node_to.y * brain_scale.y,
+                ) + offset,
             ];
             self.geng.draw_2d().draw(
                 framebuffer,
                 &vertices,
                 Color::GREEN,
-                ugli::DrawMode::Lines {
-                    line_width: brain_scale / 50.0,
-                },
+                ugli::DrawMode::Lines { line_width: 2.0 },
             );
         }
     }

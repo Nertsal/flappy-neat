@@ -196,14 +196,12 @@ impl Model {
                 input.push((next - bird.pos.x) / 50.0);
                 input.push((bird.pos.y - obstacle.pos.y - obstacle.size.y / 2.0) / 40.0 + 0.5);
                 input.push((bird.pos.y - obstacle.pos.y + obstacle.size.y / 2.0) / 40.0 + 0.5);
-                println!("{:?}", input);
                 return input;
             }
         }
         for _ in 0..3 {
             input.push(0.0);
         }
-        println!("{:?}", input);
         input
     }
     fn spawn_obstacle(&mut self) {

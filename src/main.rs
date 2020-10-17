@@ -9,6 +9,7 @@ use renderer::*;
 struct State {
     model: Model,
     renderer: Renderer,
+    time_scale: f32,
 }
 
 impl State {
@@ -24,14 +25,15 @@ impl State {
         Self {
             renderer: Renderer::new(geng, config.max_clients),
             model: Model::new(rules, config),
+            time_scale: 5.0,
         }
     }
 }
 
 impl geng::State for State {
     fn update(&mut self, delta_time: f64) {
-        self.model.update(delta_time as f32);
-        self.renderer.update(delta_time as f32);
+        self.model.update(delta_time as f32 * self.time_scale);
+        self.renderer.update(delta_time as f32 * self.time_scale);
     }
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
         self.renderer.draw(framebuffer, &self.model);
