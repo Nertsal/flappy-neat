@@ -143,31 +143,35 @@ impl Model {
             }
         }
 
-        for (_, bird) in &mut self.clients {
-            if bird.alive {
-                bird.speed += gravity * delta_time;
-                bird.pos += bird.speed * delta_time;
-                max_x = max_x.max(bird.pos.x);
+        if self.player.alive || self.clients.iter().any(|(_, bird)| bird.alive) {
+            for (_, bird) in &mut self.clients {
+                if bird.alive {
+                    bird.speed += gravity * delta_time;
+                    bird.pos += bird.speed * delta_time;
+                    max_x = max_x.max(bird.pos.x);
 
-                match &bird.controller {
-                    Controller::Client(client) => {
-                        let output = client.borrow().calculate(bird.read(&self.obstacles));
-                        if *output.first().unwrap() >= 0.5 {
-                            bird.speed.y = self.rules.jump_speed;
+                    match &bird.controller {
+                        Controller::Client(client) => {
+                            let output = client.borrow().calculate(bird.read(&self.obstacles));
+                            if *output.first().unwrap() >= 0.5 {
+                                bird.speed.y = self.rules.jump_speed;
+                            }
                         }
+                        _ => (),
                     }
-                    _ => (),
-                }
 
-                bird.check_pos();
-                for obstacle in &self.obstacles {
-                    bird.collide(obstacle);
+                    bird.check_pos();
+                    for obstacle in &self.obstacles {
+                        bird.collide(obstacle);
+                    }
                 }
             }
-        }
-
-        if max_x >= self.next_obstacle - self.rules.obstacle_dist {
-            self.spawn_obstacle();
+            if max_x >= self.next_obstacle - self.rules.obstacle_dist {
+                self.spawn_obstacle();
+            }
+        } else {
+            self.reset();
+            self.neat.borrow_mut().evolve();
         }
     }
     pub fn handle_event(&mut self, event: &geng::Event) {

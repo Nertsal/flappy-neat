@@ -23,7 +23,7 @@ impl State {
         ))
         .unwrap();
         Self {
-            renderer: Renderer::new(geng, config.max_clients),
+            renderer: Renderer::new(geng),
             model: Model::new(rules, config),
             time_scale: 5.0,
         }
