@@ -68,7 +68,7 @@ impl Bird {
             }
         }
     }
-    fn read(&self, obstacles: &Vec<Obstacle>) -> Vec<f32> {
+    pub fn read(&self, obstacles: &Vec<Obstacle>) -> Vec<f32> {
         let mut input = Vec::with_capacity(5);
         input.push(1.0); // Bias
         input.push(self.pos.y / 40.0 + 0.5);

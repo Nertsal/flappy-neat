@@ -5,6 +5,7 @@ pub struct Renderer {
     scale: f32,
     focused: Option<usize>,
     max_focus: usize,
+    ui_controller: geng::ui::Controller,
 }
 
 impl Renderer {
@@ -14,6 +15,7 @@ impl Renderer {
             scale: 20.0,
             focused: None,
             max_focus: clients_count - 1,
+            ui_controller: geng::ui::Controller::new(),
         }
     }
     pub fn update(&mut self, _delta_time: f32) {}
@@ -25,7 +27,7 @@ impl Renderer {
             if let Some(bird) = model.clients.get(&focused) {
                 offset.x = bird.pos.x;
                 if let Controller::Client(client) = &bird.controller {
-                    self.draw_brain(framebuffer, &client.borrow().genome);
+                    self.draw_brain(framebuffer, model, &client.borrow().genome);
                 }
             }
         }
@@ -83,17 +85,38 @@ impl Renderer {
     fn draw_brain(
         &mut self,
         framebuffer: &mut ugli::Framebuffer,
+        model: &Model,
         genome: &neat::structure::Genome,
     ) {
+        use geng::ui::*;
+        let mut widgets: Vec<Box<dyn Widget>> = Vec::new();
+
+        let nodes_output = genome.calculate_debug(
+            model
+                .clients
+                .get(&self.focused.unwrap())
+                .unwrap()
+                .read(&model.obstacles),
+        );
+
         let brain_scale = vec2(100.0, 500.0);
         let offset = vec2(50.0, 50.0);
-        for node in genome.nodes() {
-            self.geng.draw_2d().circle(
-                framebuffer,
-                vec2(node.x * brain_scale.x, node.y * brain_scale.y) + offset,
-                5.0,
-                Color::RED,
-            );
+        for node in &genome.nodes() {
+            let position = vec2(node.x * brain_scale.x, node.y * brain_scale.y) + offset;
+            self.geng
+                .draw_2d()
+                .circle(framebuffer, position, 5.0, Color::RED);
+            let value = nodes_output.get(&node.gene).unwrap();
+            widgets.push(Box::new(
+                geng::ui::Text::new(
+                    format!("{:.2}", value),
+                    self.geng.default_font(),
+                    0.015,
+                    Color::WHITE,
+                )
+                .padding_left(position.x as f64)
+                .padding_bottom(position.y as f64),
+            ));
         }
         for connection in &genome.connections {
             let vertices = [
@@ -112,7 +135,21 @@ impl Renderer {
                 Color::GREEN,
                 ugli::DrawMode::Lines { line_width: 2.0 },
             );
+            let position = (vertices[0] + vertices[1]) / 2.0;
+            widgets.push(Box::new(
+                geng::ui::Text::new(
+                    format!("{:.2}", connection.weight),
+                    self.geng.default_font(),
+                    0.015,
+                    Color::GRAY,
+                )
+                .padding_left(position.x as f64)
+                .padding_bottom(position.y as f64),
+            ));
         }
+
+        self.ui_controller
+            .draw(&mut geng::ui::stack(widgets), framebuffer);
     }
     pub fn handle_event(&mut self, event: &geng::Event) {
         match event {
