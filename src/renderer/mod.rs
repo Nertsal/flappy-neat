@@ -3,7 +3,6 @@ use super::*;
 pub struct Renderer {
     geng: Rc<Geng>,
     scale: f32,
-    ui_controller: geng::ui::Controller,
 }
 
 impl Renderer {
@@ -11,7 +10,6 @@ impl Renderer {
         Self {
             geng: geng.clone(),
             scale: 20.0,
-            ui_controller: geng::ui::Controller::new(),
         }
     }
     pub fn update(&mut self, _delta_time: f32) {}
@@ -19,7 +17,7 @@ impl Renderer {
         ugli::clear(framebuffer, Some(Color::BLACK), None);
 
         let offset = if let Some((_, bird)) = model.clients.iter().find(|(_, bird)| bird.alive) {
-            self.draw_brain(framebuffer, model, bird);
+            self.draw_brain(framebuffer, bird);
             vec2(bird.pos.x, 0.0)
         } else {
             vec2(model.player.pos.x, 0.0)
@@ -75,16 +73,8 @@ impl Renderer {
             );
         }
     }
-    fn draw_brain(&mut self, framebuffer: &mut ugli::Framebuffer, model: &Model, bird: &Bird) {
-        use geng::ui::*;
-        let mut widgets: Vec<Box<dyn Widget>> = Vec::new();
-
+    fn draw_brain(&mut self, framebuffer: &mut ugli::Framebuffer, bird: &Bird) {
         if let model::Controller::Client(client) = &bird.controller {
-            let nodes_output = client
-                .borrow()
-                .genome
-                .calculate_debug(bird.read(&model.obstacles));
-
             let brain_scale = vec2(300.0, 500.0);
             let offset = vec2(50.0, 50.0);
             for node in &client.borrow().genome.nodes() {
@@ -92,17 +82,6 @@ impl Renderer {
                 self.geng
                     .draw_2d()
                     .circle(framebuffer, position, 5.0, Color::RED);
-                let value = nodes_output.get(&node.gene).unwrap();
-                widgets.push(Box::new(
-                    geng::ui::Text::new(
-                        format!("{:.2}", value),
-                        self.geng.default_font(),
-                        0.015,
-                        Color::WHITE,
-                    )
-                    .padding_left(position.x as f64)
-                    .padding_bottom(position.y as f64),
-                ));
             }
             for connection in &client.borrow().genome.connections {
                 let vertices = [
@@ -121,22 +100,8 @@ impl Renderer {
                     Color::GREEN,
                     ugli::DrawMode::Lines { line_width: 2.0 },
                 );
-                let position = (vertices[0] + vertices[1]) / 2.0;
-                widgets.push(Box::new(
-                    geng::ui::Text::new(
-                        format!("{:.2}", connection.weight),
-                        self.geng.default_font(),
-                        0.015,
-                        Color::GRAY,
-                    )
-                    .padding_left(position.x as f64)
-                    .padding_bottom(position.y as f64),
-                ));
             }
         }
-
-        self.ui_controller
-            .draw(&mut geng::ui::stack(widgets), framebuffer);
     }
     pub fn handle_event(&mut self, event: &geng::Event) {
         match event {
