@@ -1,0 +1,13 @@
+{
+    "gravity": {
+        "x": 0,
+        "y": -10
+    },
+    "bird_radius": 1,
+    "jump_speed": 10,
+    "obstacle_size": {
+        "x": 1,
+        "y": 10
+    },
+    "obstacle_dist": 20
+}

@@ -7,13 +7,14 @@ use model::*;
 use renderer::*;
 
 struct State {
+    geng: Geng,
     model: Model,
     renderer: Renderer,
-    time_scale: f32,
+    model_delta_time: f32,
 }
 
 impl State {
-    fn new(geng: &Rc<Geng>) -> Self {
+    fn new(geng: &Geng) -> Self {
         let rules: Rules = serde_json::from_reader(std::io::BufReader::new(
             std::fs::File::open("rules.json").unwrap(),
         ))
@@ -23,21 +24,25 @@ impl State {
         ))
         .unwrap();
         Self {
+            geng: geng.clone(),
             renderer: Renderer::new(geng),
             model: Model::new(rules, config),
-            time_scale: 5.0,
+            model_delta_time: 0.1,
         }
     }
 }
 
 impl geng::State for State {
     fn update(&mut self, delta_time: f64) {
-        self.model.update(delta_time as f32 * self.time_scale);
-        self.renderer.update(delta_time as f32 * self.time_scale);
+        self.model.update(self.model_delta_time);
+        self.renderer.update(delta_time as f32);
     }
+
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
-        self.renderer.draw(framebuffer, &self.model);
+        let minimal = self.geng.window().is_key_pressed(geng::Key::S);
+        self.renderer.draw(&self.model, minimal, framebuffer);
     }
+
     fn handle_event(&mut self, event: geng::Event) {
         self.model.handle_event(&event);
         self.renderer.handle_event(&event);
@@ -45,7 +50,14 @@ impl geng::State for State {
 }
 
 fn main() {
-    let geng = Rc::new(Geng::new(default()));
+    logger::init().unwrap();
+    geng::setup_panic_handler();
+
+    let geng = Geng::new_with(geng::ContextOptions {
+        title: "Flappy NEAT".to_string(),
+        vsync: false,
+        ..Default::default()
+    });
     let state = State::new(&geng);
-    geng::run(geng, state);
+    geng::run(&geng, state);
 }

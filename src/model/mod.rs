@@ -1,6 +1,6 @@
 use super::*;
-use neat::structure::Client;
-use neat::{Neat, NeatConfig};
+
+use neat::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct Rules {
@@ -12,10 +12,12 @@ pub struct Rules {
 }
 
 pub struct Model {
-    neat: Rc<RefCell<Neat>>,
+    pub neat: Neat,
+    pub generation: usize,
+    pub max_score: f32,
     rules: Rules,
     pub player: Bird,
-    pub clients: HashMap<usize, Bird>,
+    pub clients: HashMap<Id, Bird>,
     pub obstacles: Vec<Obstacle>,
     next_obstacle: f32,
 }
@@ -34,6 +36,7 @@ impl Bird {
             self.alive = false;
         }
     }
+
     fn collide(&mut self, obstacle: &Obstacle) {
         let dist_left = obstacle.pos.x - obstacle.size.x / 2.0 - self.pos.x;
         let dist_right = self.pos.x - obstacle.pos.x - obstacle.size.x / 2.0;
@@ -68,6 +71,7 @@ impl Bird {
             }
         }
     }
+
     pub fn read(&self, obstacles: &Vec<Obstacle>) -> Vec<f32> {
         let mut input = Vec::with_capacity(5);
         input.push(1.0); // Bias
@@ -81,16 +85,14 @@ impl Bird {
                 return input;
             }
         }
-        for _ in 0..3 {
-            input.push(0.0);
-        }
+        input.extend(vec![0.0; 3]);
         input
     }
 }
 
 pub enum Controller {
     Player,
-    Client(Rc<RefCell<Client>>),
+    Client(Id),
 }
 
 pub struct Obstacle {
@@ -101,14 +103,14 @@ pub struct Obstacle {
 impl Model {
     pub fn new(rules: Rules, config: NeatConfig) -> Self {
         let neat = Neat::new(config);
-        let mut clients = HashMap::with_capacity(neat.borrow().clients.len());
-        for (id, client) in neat.borrow().clients.iter().enumerate() {
+        let mut clients = HashMap::with_capacity(neat.clients.len());
+        for &id in neat.clients.keys() {
             let bird = Bird {
                 alive: true,
                 pos: vec2(0.0, 0.0),
                 radius: rules.bird_radius,
                 speed: vec2(5.0, 0.0),
-                controller: Controller::Client(client.clone()),
+                controller: Controller::Client(id),
             };
             clients.insert(id, bird);
         }
@@ -121,6 +123,8 @@ impl Model {
         };
         Self {
             neat,
+            generation: 0,
+            max_score: 0.0,
             rules,
             player,
             clients,
@@ -128,6 +132,7 @@ impl Model {
             next_obstacle: 20.0,
         }
     }
+
     pub fn update(&mut self, delta_time: f32) {
         let gravity = self.rules.gravity;
 
@@ -144,20 +149,18 @@ impl Model {
         }
 
         if self.player.alive || self.clients.iter().any(|(_, bird)| bird.alive) {
-            for (_, bird) in &mut self.clients {
+            for bird in self.clients.values_mut() {
                 if bird.alive {
                     bird.speed += gravity * delta_time;
                     bird.pos += bird.speed * delta_time;
                     max_x = max_x.max(bird.pos.x);
 
-                    match &bird.controller {
-                        Controller::Client(client) => {
-                            let output = client.borrow().calculate(bird.read(&self.obstacles));
-                            if *output.first().unwrap() >= 0.5 {
-                                bird.speed.y = self.rules.jump_speed;
-                            }
+                    if let Controller::Client(client) = &bird.controller {
+                        let client = self.neat.clients.get(client).unwrap();
+                        let output = client.calculate(bird.read(&self.obstacles));
+                        if *output.first().unwrap() >= 0.5 {
+                            bird.speed.y = self.rules.jump_speed;
                         }
-                        _ => (),
                     }
 
                     bird.check_pos();
@@ -170,34 +173,41 @@ impl Model {
                 self.spawn_obstacle();
             }
         } else {
-            self.reset();
-            self.neat.borrow_mut().evolve();
+            self.next_generation();
         }
     }
+
+    fn next_generation(&mut self) {
+        self.reset();
+        self.neat.evolve();
+        self.generation += 1;
+    }
+
     pub fn handle_event(&mut self, event: &geng::Event) {
-        match event {
-            geng::Event::KeyDown { key } => match key {
+        if let geng::Event::KeyDown { key } = event {
+            match key {
                 geng::Key::W | geng::Key::Up | geng::Key::Space => {
                     if self.player.alive {
                         self.player.speed.y = self.rules.jump_speed;
                     }
                 }
                 geng::Key::R => {
-                    self.reset();
-                    self.neat.borrow_mut().evolve();
+                    self.next_generation();
                 }
                 _ => (),
-            },
-            _ => (),
+            }
         }
     }
+
     fn reset(&mut self) {
         self.player.alive = true;
         self.player.pos = vec2(0.0, 0.0);
         self.player.speed.y = 0.0;
-        for (_, bird) in &mut self.clients {
+        for bird in self.clients.values_mut() {
             if let Controller::Client(client) = &bird.controller {
-                client.borrow_mut().score = bird.pos.x;
+                let client = self.neat.clients.get_mut(client).unwrap();
+                client.score = bird.pos.x;
+                self.max_score = self.max_score.max(client.score);
             }
 
             bird.alive = true;
@@ -207,10 +217,11 @@ impl Model {
         self.obstacles.clear();
         self.next_obstacle = self.rules.obstacle_dist;
     }
+
     fn spawn_obstacle(&mut self) {
         let mut random = rand::thread_rng();
         let max_height = 20.0 - self.rules.obstacle_size.y;
-        let height = random.gen_range(-max_height, max_height);
+        let height = random.gen_range(-max_height..=max_height);
         let obstacle = Obstacle {
             pos: vec2(self.next_obstacle, height),
             size: self.rules.obstacle_size,

@@ -1,0 +1,20 @@
+{
+    "input_size": 5,
+    "output_size": 1,
+    "max_clients": 100,
+    "disjoint": 1,
+    "excess": 1,
+    "weight_diff": 0.4,
+    "cp": 4.0,
+    "cp_change_rate": 0.3,
+    "target_species_count": 3,
+    "probability_mutate_link": 0.03,
+    "probability_mutate_node": 0.05,
+    "probability_mutate_weight_shift": 0.07,
+    "probability_mutate_weight_random": 0.01,
+    "probability_mutate_link_toggle": 0.01,
+    "weight_shift_strength": 5,
+    "weight_random_strength": 10,
+    "clients_mutation_rate": 0.5,
+    "survivors_percentage": 0.1
+}
